@@ -5,6 +5,11 @@ from datetime import datetime
 from core.database import get_db
 from energy.models import Building, EnergyReading
 
+
+from fastapi import UploadFile, File
+from core.rag import index_documents, query_rag
+from core.storage import parse_file
+
 router = APIRouter()
 
 # --- Pydantic şemaları ---
@@ -67,3 +72,32 @@ def list_readings(building_id: int = None, db: Session = Depends(get_db)):
     if building_id:
         query = query.filter(EnergyReading.building_id == building_id)
     return query.all()
+
+
+@router.post("/upload")
+async def upload_file(file: UploadFile = File(...)):
+    content = await file.read()
+    try:
+        chunks = parse_file(content, file.filename)
+        index_documents(
+            texts=chunks,
+            collection_name="energy-docs",
+            ids=[f"{file.filename}-{i}" for i in range(len(chunks))]
+        )
+        return {
+            "message": f"{file.filename} başarıyla yüklendi",
+            "chunks": len(chunks)
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+class AskRequest(BaseModel):
+    question: str
+
+@router.post("/ask")
+def ask_question(request: AskRequest):
+    answer = query_rag(
+        question=request.question,
+        collection_name="energy-docs"
+    )
+    return {"question": request.question, "answer": answer}
