@@ -22,8 +22,7 @@ class BuildingResponse(BaseModel):
     name: str
     address: str | None
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 class ReadingCreate(BaseModel):
     building_id: int
@@ -38,8 +37,7 @@ class ReadingResponse(BaseModel):
     kwh: float
     source: str
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 # --- Endpoint'ler ---
 @router.get("/health")

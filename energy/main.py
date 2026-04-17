@@ -1,8 +1,12 @@
 from fastapi import FastAPI
-from core.database import Base, engine
+from contextlib import asynccontextmanager
 from energy.routes import router
 
-Base.metadata.create_all(bind=engine)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    from core.database import Base, engine
+    Base.metadata.create_all(bind=engine)
+    yield
 
-app = FastAPI(title="EnergyShift API", version="0.1.0")
+app = FastAPI(title="EnergyShift API", version="0.1.0", lifespan=lifespan)
 app.include_router(router, prefix="/api")
