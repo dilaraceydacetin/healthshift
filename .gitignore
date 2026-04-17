@@ -1,0 +1,18 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# Environment
+.env
+
+# Docker
+*.log
+
+# VS Code
+.vscode/
+
+# pyenv
+.python-version

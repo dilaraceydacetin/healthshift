@@ -1,0 +1,51 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: healthshift
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d healthshift"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  energy:
+    build:
+      context: .
+      dockerfile: energy/Dockerfile
+    ports:
+      - "8001:8001"
+    environment:
+      DATABASE_URL: postgresql://user:password@postgres:5432/healthshift
+      LLM_API_KEY: ${LLM_API_KEY:-placeholder}
+      DEBUG: "true"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - .:/app
+
+  symptom:
+    build:
+      context: .
+      dockerfile: symptom/Dockerfile
+    ports:
+      - "8002:8002"
+    environment:
+      DATABASE_URL: postgresql://user:password@postgres:5432/healthshift
+      LLM_API_KEY: ${LLM_API_KEY:-placeholder}
+      DEBUG: "true"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - .:/app
+
+volumes:
+  pgdata:
