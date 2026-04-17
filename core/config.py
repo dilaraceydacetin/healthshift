@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     llm_provider: str = "openai"  # "openai" veya "anthropic"
     llm_api_key: str = ""
     llm_model: str = "gpt-4o-mini"
+    llm_base_url: str = "https://api.groq.com/openai/v1" 
 
     # Uygulama
     debug: bool = True
