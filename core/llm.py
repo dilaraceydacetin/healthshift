@@ -8,12 +8,12 @@ client = OpenAI(
 
 def ask(prompt: str, context: str = "") -> str:
     if context:
-        system_message = f"""Sen bir enerji ve sağlık veri analisti asistanısın.
-Aşağıdaki bilgileri kullanarak soruyu cevapla:
+        system_message = f"""You are a health and energy data analyst assistant. Always answer in English.
+Use the following information to answer the question:
 
 {context}
 
-Eğer bilgi yetersizse bunu belirt."""
+If the information is insufficient, say so clearly."""
     else:
         system_message = "Sen bir veri analisti asistanısın."
 

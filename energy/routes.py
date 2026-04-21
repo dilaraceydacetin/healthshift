@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from datetime import datetime
 from core.database import get_db
 from energy.models import Building, EnergyReading
+from energy.agent import energy_agent
 
 
 from fastapi import UploadFile, File
@@ -99,3 +100,20 @@ def ask_question(request: AskRequest):
         collection_name="energy-docs"
     )
     return {"question": request.question, "answer": answer}
+
+
+@router.post("/weekly-report/{building_id}")
+def weekly_report(building_id: int):
+    result = energy_agent.invoke({
+        "building_id": building_id,
+        "readings": [],
+        "anomalies": [],
+        "analysis": "",
+        "recommendations": ""
+    })
+    return {
+        "building_id": building_id,
+        "anomalies_detected": len(result["anomalies"]),
+        "analysis": result["analysis"],
+        "recommendations": result["recommendations"]
+    }
