@@ -75,10 +75,10 @@ Services start at:
 
 ## API Endpoints
 
-- POST /api/upload          Upload CSV energy data
-- POST /api/ask             Ask AI about your data
-- POST /api/weekly-report/{id}  LangGraph energy analysis
-- POST /api/entries         Log a symptom
-- GET  /api/report/pdf      Download symptom PDF report
+- POST /api/upload    -      Upload CSV energy data
+- POST /api/ask       -      Ask AI about your data
+- POST /api/weekly-report/{id} - LangGraph energy analysis
+- POST /api/entries      -   Log a symptom
+- GET  /api/report/pdf  -    Download symptom PDF report
 
 
