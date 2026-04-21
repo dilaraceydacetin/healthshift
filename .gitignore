@@ -16,3 +16,5 @@ __pycache__/
 
 # pyenv
 .python-version
+infra/.terraform/
+infra/.terraform.lock.hcl
