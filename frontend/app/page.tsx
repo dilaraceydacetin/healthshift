@@ -2,9 +2,9 @@ import Link from "next/link";
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-gray-50 overflow-x-hidden">
-      <div className="max-w-2xl mx-auto px-4 py-16">
-        <div className="mb-16">
+    <main className="h-screen bg-gray-50 overflow-hidden">
+      <div className="max-w-2xl mx-auto px-4 py-8">
+        <div className="mb-8">
           <div className="inline-block bg-gray-900 text-white text-xs font-medium tracking-widest uppercase px-3 py-1 rounded-full mb-6">
             AI-Powered Analytics
           </div>
@@ -54,10 +54,10 @@ export default function Home() {
           </Link>
         </div>
 
-        <div className="mt-16 pt-8 border-t border-gray-100">
-          <p className="text-gray-400 text-xs">
-            Built with FastAPI · PostgreSQL · LangGraph · Next.js · Deployed on Render + Vercel
-          </p>
+        <div className="pt-6 border-t border-gray-100">
+           <p className="text-gray-400 text-xs">
+             Built with FastAPI · PostgreSQL · LangGraph · Next.js · Deployed on Render + Vercel
+           </p>
         </div>
       </div>
     </main>
