@@ -47,3 +47,9 @@ jobs:
       - name: Run tests
         run: |
           pytest energy/tests/ symptom/tests/ -v
+
+          - name: Install dependencies
+        run: |
+          pip install -r energy/requirements.txt
+          pip install -r symptom/requirements.txt
+          pip install pytest httpx
