@@ -13,9 +13,9 @@ Use the following information to answer the question:
 
 {context}
 
-If the information is insufficient, say so clearly."""
+If the information is insufficient, say so clearly in English."""
     else:
-        system_message = "Sen bir veri analisti asistanısın."
+        system_message = "You are a data analyst assistant. Always answer in English."
 
     response = client.chat.completions.create(
         model=settings.llm_model,
