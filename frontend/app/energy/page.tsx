@@ -1,57 +1,124 @@
 "use client";
 import { useState } from "react";
-import AiChat from "@/components/AiChat";
+import Link from "next/link";
 
 const API_URL = process.env.NEXT_PUBLIC_ENERGY_API_URL || "http://localhost:8001/api";
 
 export default function EnergyPage() {
   const [uploading, setUploading] = useState(false);
   const [uploadMsg, setUploadMsg] = useState("");
+  const [uploadError, setUploadError] = useState(false);
+  const [question, setQuestion] = useState("");
+  const [answer, setAnswer] = useState("");
+  const [asking, setAsking] = useState(false);
+  const [askError, setAskError] = useState(false);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
     setUploadMsg("");
+    setUploadError(false);
     const formData = new FormData();
     formData.append("file", file);
     try {
-      const res = await fetch(`${API_URL}/upload`, {
-        method: "POST",
-        body: formData,
-      });
+      const res = await fetch(`${API_URL}/upload`, { method: "POST", body: formData });
+      if (!res.ok) throw new Error();
       const data = await res.json();
-      setUploadMsg(`✓ ${data.message} (${data.chunks} chunks)`);
+      setUploadMsg(`${file.name} uploaded successfully (${data.chunks} chunks)`);
+      setUploadError(false);
     } catch {
-      setUploadMsg("Upload failed.");
+      setUploadMsg("Upload failed. Please try again.");
+      setUploadError(true);
     } finally {
       setUploading(false);
     }
   };
 
+  const handleAsk = async () => {
+    if (!question.trim()) return;
+    setAsking(true);
+    setAnswer("");
+    setAskError(false);
+    try {
+      const res = await fetch(`${API_URL}/ask`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question }),
+      });
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      setAnswer(data.answer);
+    } catch {
+      setAnswer("Failed to get a response. Please try again.");
+      setAskError(true);
+    } finally {
+      setAsking(false);
+    }
+  };
+
   return (
-    <main className="max-w-2xl mx-auto px-4 py-10">
-      <h1 className="text-2xl font-semibold text-gray-900 mb-2">EnergyShift</h1>
-      <p className="text-gray-500 text-sm mb-8">Upload energy data and ask AI questions about it.</p>
+    <main className="min-h-screen bg-gray-50">
+      <div className="max-w-3xl mx-auto px-6 py-12">
+        <div className="mb-10">
+          <Link href="/" className="text-gray-400 text-sm hover:text-gray-600 transition-colors mb-6 inline-block">
+            ← Back
+          </Link>
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center">
+              <div className="w-3 h-3 bg-white rounded-sm"></div>
+            </div>
+            <h1 className="text-2xl font-semibold text-gray-900">EnergyShift</h1>
+          </div>
+          <p className="text-gray-500 text-sm">Upload energy data and ask AI questions about it.</p>
+        </div>
 
-      <div className="bg-white border border-gray-200 rounded-xl p-6 mb-6">
-        <h2 className="text-sm font-medium text-gray-700 mb-3">Upload CSV</h2>
-        <input
-          type="file"
-          accept=".csv"
-          onChange={handleUpload}
-          disabled={uploading}
-          className="text-sm text-gray-600"
-        />
-        {uploadMsg && <p className="mt-2 text-sm text-green-600">{uploadMsg}</p>}
-      </div>
+        <div className="bg-white border border-gray-200 rounded-2xl p-6 mb-4">
+          <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4">Upload Data</h2>
+          <label className={`flex items-center gap-3 p-4 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${uploading ? "border-gray-200 bg-gray-50" : "border-gray-200 hover:border-emerald-300 hover:bg-emerald-50"}`}>
+            <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <svg className="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-700">{uploading ? "Uploading..." : "Choose CSV file"}</p>
+              <p className="text-xs text-gray-400">building, date, kwh, notes</p>
+            </div>
+            <input type="file" accept=".csv" onChange={handleUpload} disabled={uploading} className="hidden" />
+          </label>
+          {uploadMsg && (
+            <p className={`mt-3 text-sm ${uploadError ? "text-red-500" : "text-emerald-600"}`}>
+              {uploadError ? "✗" : "✓"} {uploadMsg}
+            </p>
+          )}
+        </div>
 
-      <div className="bg-white border border-gray-200 rounded-xl p-6">
-        <h2 className="text-sm font-medium text-gray-700 mb-3">Ask AI</h2>
-        <AiChat
-          apiUrl={API_URL}
-          placeholder="Which building consumes the most energy?"
-        />
+        <div className="bg-white border border-gray-200 rounded-2xl p-6">
+          <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4">Ask AI</h2>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={question}
+              onChange={(e) => setQuestion(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleAsk()}
+              placeholder="Which building consumes the most energy?"
+              className="flex-1 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:border-transparent"
+            />
+            <button
+              onClick={handleAsk}
+              disabled={asking || !question.trim()}
+              className="bg-emerald-500 text-white px-5 py-3 rounded-xl text-sm font-medium hover:bg-emerald-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              {asking ? "..." : "Ask"}
+            </button>
+          </div>
+          {answer && (
+            <div className={`mt-4 p-4 rounded-xl text-sm leading-relaxed ${askError ? "bg-red-50 text-red-700" : "bg-gray-50 text-gray-700"}`}>
+              {answer}
+            </div>
+          )}
+        </div>
       </div>
     </main>
   );
