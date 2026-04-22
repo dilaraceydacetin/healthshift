@@ -12,7 +12,12 @@ from fastapi import UploadFile, File
 from core.rag import index_documents, query_rag
 from core.storage import parse_file
 
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Request
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+
 router = APIRouter()
+limiter = Limiter(key_func=get_remote_address)
 
 # --- Pydantic şemaları ---
 class BuildingCreate(BaseModel):
@@ -95,12 +100,10 @@ class AskRequest(BaseModel):
     question: str
 
 @router.post("/ask")
-def ask_question(request: AskRequest):
-    answer = query_rag(
-        question=request.question,
-        collection_name="energy-docs"
-    )
-    return {"question": request.question, "answer": answer}
+@limiter.limit("10/minute")
+def ask_question(request: Request, body: AskRequest):
+    answer = query_rag(question=body.question, collection_name="energy-docs")
+    return {"question": body.question, "answer": answer}
 
 
 @router.post("/weekly-report/{building_id}")
