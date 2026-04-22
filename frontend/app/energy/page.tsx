@@ -189,21 +189,6 @@ export default function EnergyPage() {
 
           {/* Main content */}
           <div className="flex-1 flex flex-col gap-4">
-            {/* Chart */}
-            <div className="bg-white border border-gray-200 rounded-2xl p-6">
-              <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-1">Energy Consumption</h2>
-              <p className="text-xs text-gray-400 mb-4">Monthly kWh — all buildings</p>
-              <ResponsiveContainer width="100%" height={180}>
-                <BarChart data={chartData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis dataKey="month" tick={{ fontSize: 11, fill: "#9ca3af" }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 11, fill: "#9ca3af" }} axisLine={false} tickLine={false} />
-                  <Tooltip contentStyle={{ border: "1px solid #e5e7eb", borderRadius: "12px", fontSize: "12px" }} cursor={{ fill: "#f9fafb" }} />
-                  <Bar dataKey="kwh" fill="#10b981" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-
             {/* Upload */}
             <div className="bg-white border border-gray-200 rounded-2xl p-6">
               <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4">Upload Data</h2>
@@ -259,6 +244,21 @@ export default function EnergyPage() {
                   {asking ? "..." : "Ask"}
                 </button>
               </div>
+            </div>
+
+            {/* Chart */}
+            <div className="bg-white border border-gray-200 rounded-2xl p-6">
+              <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-1">Energy Consumption</h2>
+              <p className="text-xs text-gray-400 mb-4">Monthly kWh — all buildings</p>
+              <ResponsiveContainer width="100%" height={180}>
+                <BarChart data={chartData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis dataKey="month" tick={{ fontSize: 11, fill: "#9ca3af" }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 11, fill: "#9ca3af" }} axisLine={false} tickLine={false} />
+                  <Tooltip contentStyle={{ border: "1px solid #e5e7eb", borderRadius: "12px", fontSize: "12px" }} cursor={{ fill: "#f9fafb" }} />
+                  <Bar dataKey="kwh" fill="#10b981" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
           </div>
         </div>
