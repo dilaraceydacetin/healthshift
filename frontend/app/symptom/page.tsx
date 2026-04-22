@@ -40,7 +40,7 @@ export default function SymptomPage() {
             href="/"
             className="text-gray-400 text-sm hover:text-gray-600 transition-colors mb-6 inline-block"
           >
-            Back
+          ← Back
           </Link>
           <div className="flex items-center gap-3 mb-3">
             <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">

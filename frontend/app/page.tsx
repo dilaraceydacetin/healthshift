@@ -1,23 +1,72 @@
+"use client";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase";
 
 export default function Home() {
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+  const supabase = createClient();
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data.user);
+      setLoading(false);
+    });
+  }, []);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+  };
+
+  if (loading) return (
+    <main className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <p className="text-gray-400 text-sm">Loading...</p>
+    </main>
+  );
+
   return (
-    <main className="h-screen bg-gray-50 overflow-hidden">
-      <div className="max-w-2xl mx-auto px-4 py-8">
-        <div className="mb-8">
-          <div className="inline-block bg-gray-900 text-white text-xs font-medium tracking-widest uppercase px-3 py-1 rounded-full mb-6">
-            AI-Powered Analytics
+    <main className="h-screen bg-gray-50 overflow-hidden flex items-center">
+      <div className="w-full max-w-2xl mx-auto px-4 py-8">
+        <div className="mb-8 flex items-start justify-between">
+          <div>
+            <div className="inline-block bg-gray-900 text-white text-xs font-medium tracking-widest uppercase px-3 py-1 rounded-full mb-4">
+              AI-Powered Analytics
+            </div>
+            <h1 className="text-4xl font-light text-gray-900 leading-tight mb-3">
+              Health<span className="font-semibold">shift</span>
+            </h1>
+            <p className="text-gray-500 text-base font-light max-w-md">
+              Upload your data. Ask questions. Get answers powered by AI.
+            </p>
           </div>
-          <h1 className="text-5xl font-light text-gray-900 leading-tight mb-4">
-            Health<span className="font-semibold">shift</span>
-          </h1>
-          <p className="text-gray-500 text-lg font-light max-w-md">
-            Upload your data. Ask questions. Get answers powered by AI.
-          </p>
+          <div className="flex flex-col items-end gap-2 mt-2">
+            {user ? (
+              <>
+                <p className="text-xs text-gray-400">{user.email}</p>
+                <button
+                  onClick={handleSignOut}
+                  className="text-xs text-gray-500 hover:text-gray-900 transition-colors"
+                >
+                  Sign out
+                </button>
+              </>
+            ) : (
+              <Link
+                href="/login"
+                className="text-xs bg-gray-900 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
+              >
+                Sign in
+              </Link>
+            )}
+          </div>
         </div>
 
-        <div className="flex flex-col gap-4 sm:flex-row">
-          <Link href="/energy" className="group block flex-1 min-w-0">
+        <div className="flex flex-col gap-4 sm:flex-row mb-8">
+          <Link href={user ? "/energy" : "/login"} className="group block flex-1 min-w-0">
             <div className="bg-white border border-gray-200 rounded-2xl p-8 hover:border-emerald-300 hover:shadow-lg transition-all duration-300">
               <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center mb-6 group-hover:bg-emerald-100 transition-colors">
                 <div className="w-4 h-4 bg-emerald-500 rounded-sm"></div>
@@ -27,7 +76,7 @@ export default function Home() {
                 Analyze building energy consumption. Detect anomalies and get AI-powered recommendations.
               </p>
               <div className="mt-6 flex items-center text-emerald-600 text-sm font-medium">
-                Open dashboard
+                {user ? "Open dashboard" : "Sign in to access"}
                 <svg className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
@@ -35,7 +84,7 @@ export default function Home() {
             </div>
           </Link>
 
-          <Link href="/symptom" className="group block flex-1 min-w-0">
+          <Link href={user ? "/symptom" : "/login"} className="group block flex-1 min-w-0">
             <div className="bg-white border border-gray-200 rounded-2xl p-8 hover:border-blue-300 hover:shadow-lg transition-all duration-300">
               <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center mb-6 group-hover:bg-blue-100 transition-colors">
                 <div className="w-4 h-4 bg-blue-500 rounded-full"></div>
@@ -45,7 +94,7 @@ export default function Home() {
                 Track symptoms and medications. Get pattern analysis and generate doctor-ready reports.
               </p>
               <div className="mt-6 flex items-center text-blue-600 text-sm font-medium">
-                Open dashboard
+                {user ? "Open dashboard" : "Sign in to access"}
                 <svg className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
@@ -55,9 +104,9 @@ export default function Home() {
         </div>
 
         <div className="pt-6 border-t border-gray-100">
-           <p className="text-gray-400 text-xs">
-             Built with FastAPI · PostgreSQL · LangGraph · Next.js · Deployed on Render + Vercel
-           </p>
+          <p className="text-gray-400 text-xs">
+            Built with FastAPI · PostgreSQL · LangGraph · Next.js · Deployed on Render + Vercel
+          </p>
         </div>
       </div>
     </main>
