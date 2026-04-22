@@ -32,26 +32,47 @@ export default function EnergyPage() {
   }, []);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploading(true);
-    setUploadMsg("");
-    setUploadError(false);
-    const formData = new FormData();
-    formData.append("file", file);
-    try {
-      const res = await fetch(API_URL + "/upload", { method: "POST", body: formData });
-      if (!res.ok) throw new Error();
-      const data = await res.json();
-      setUploadMsg(`${file.name} uploaded successfully (${data.chunks} chunks)`);
-      setUploadError(false);
-    } catch {
-      setUploadMsg("Upload failed. Please try again.");
-      setUploadError(true);
-    } finally {
-      setUploading(false);
+  const file = e.target.files?.[0];
+  if (!file) return;
+  setUploading(true);
+  setUploadMsg("");
+  setUploadError(false);
+
+  // Lokal parse — grafik için
+  const text = await file.text();
+  const lines = text.trim().split("\n").slice(1); // header'ı atla
+  const monthMap: Record<string, number> = {};
+  lines.forEach(line => {
+    const parts = line.split(",");
+    const date = parts[1]?.trim();
+    const kwh = parseFloat(parts[2]?.trim());
+    if (date && !isNaN(kwh)) {
+      const month = new Date(date).toLocaleString("en", { month: "short" });
+      monthMap[month] = (monthMap[month] || 0) + kwh;
     }
-  };
+  });
+  const localChart = Object.entries(monthMap).map(([month, kwh]) => ({
+    month,
+    kwh: Math.round(kwh * 10) / 10
+  }));
+  if (localChart.length > 0) setChartData(localChart);
+
+  // Backend'e de gönder (giriş yapan kullanıcı için kayıt)
+  const formData = new FormData();
+  formData.append("file", file);
+  try {
+    const res = await fetch(API_URL + "/upload", { method: "POST", body: formData });
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    setUploadMsg(`${file.name} uploaded successfully (${data.chunks} chunks)`);
+    setUploadError(false);
+  } catch {
+    setUploadMsg("Upload failed. Please try again.");
+    setUploadError(true);
+  } finally {
+    setUploading(false);
+  }
+};
 
   const handleAsk = async () => {
   if (!question.trim()) return;
