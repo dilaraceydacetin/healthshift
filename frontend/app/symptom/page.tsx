@@ -54,7 +54,8 @@ export default function SymptomPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           question: userMsg,
-          messages: newMessages.slice(0, -1)
+          messages: newMessages.slice(0, -1),
+          user_id: user?.id || "default"
         }),
       });
       if (!res.ok) throw new Error();

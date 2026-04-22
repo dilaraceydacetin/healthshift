@@ -28,3 +28,28 @@ If the information is insufficient, say so clearly in English."""
     )
 
     return response.choices[0].message.content
+
+def extract_symptoms(conversation_text: str) -> list[dict]:
+    response = client.chat.completions.create(
+        model=settings.llm_model,
+        messages=[
+            {
+                "role": "system",
+                "content": """Extract symptoms from this conversation text. 
+Return ONLY a JSON array, no other text. Example:
+[{"symptom": "headache", "severity": 7, "notes": "morning headache"}]
+If no symptoms found, return empty array: []
+severity is 1-10, estimate if not explicitly stated."""
+            },
+            {"role": "user", "content": conversation_text}
+        ],
+        temperature=0.1,
+        max_tokens=500
+    )
+    import json
+    try:
+        text = response.choices[0].message.content.strip()
+        text = text.replace("```json", "").replace("```", "").strip()
+        return json.loads(text)
+    except:
+        return []

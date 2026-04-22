@@ -80,11 +80,13 @@ def create_medication(med: MedicationCreate, db: Session = Depends(get_db)):
 
 class AskRequest(BaseModel):
     question: str
-    messages: list[dict] = []  # konuşma geçmişi
+    messages: list[dict] = []
+    user_id: str = "default"
 
 @router.post("/ask")
 @limiter.limit("10/minute")
 def ask_question(request: Request, body: AskRequest, db: Session = Depends(get_db)):
+    # Mevcut DB semptomlarını çek
     entries = db.query(SymptomEntry).order_by(
         SymptomEntry.date.desc()
     ).limit(20).all()
@@ -92,7 +94,7 @@ def ask_question(request: Request, body: AskRequest, db: Session = Depends(get_d
     context_parts = []
 
     if entries:
-        context_parts.append("Recorded symptom entries:\n" + "\n".join([
+        context_parts.append("Previously recorded symptoms:\n" + "\n".join([
             f"- {e.date.strftime('%Y-%m-%d')}: {e.symptom} (severity: {e.severity}/10) - {e.notes}"
             for e in entries
         ]))
@@ -100,16 +102,36 @@ def ask_question(request: Request, body: AskRequest, db: Session = Depends(get_d
     if body.messages:
         history = "\n".join([
             f"{'User' if m['role'] == 'user' else 'AI'}: {m['text']}"
-            for m in body.messages[-6:]  # son 6 mesaj
+            for m in body.messages[-6:]
         ])
-        context_parts.append(f"Conversation history:\n{history}")
+        context_parts.append(f"Current conversation:\n{history}")
 
     context = "\n\n".join(context_parts)
 
-    from core.llm import ask
-    answer = ask(prompt=body.question, context=context)
-    return {"question": body.question, "answer": answer}
+    from core.llm import ask as llm_ask, extract_symptoms
+    answer = llm_ask(prompt=body.question, context=context)
 
+    # Kullanıcının mesajından semptomları çıkar ve kaydet
+    user_text = body.question
+    if body.messages:
+        user_text += " " + " ".join([
+            m["text"] for m in body.messages if m["role"] == "user"
+        ])
+    
+    symptoms = extract_symptoms(user_text)
+    for s in symptoms:
+        db_entry = SymptomEntry(
+            user_id=body.user_id if hasattr(body, "user_id") else "default",
+            date=datetime.now(),
+            symptom=s.get("symptom", "unknown"),
+            severity=s.get("severity", 5),
+            notes=s.get("notes", body.question[:100])
+        )
+        db.add(db_entry)
+    if symptoms:
+        db.commit()
+
+    return {"question": body.question, "answer": answer}
 
 
 @router.get("/report/pdf")
