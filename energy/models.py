@@ -1,6 +1,7 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime
+from sqlalchemy import Column, Integer, String, Float, DateTime, JSON
 from sqlalchemy.sql import func
 from core.database import Base
+
 
 class Building(Base):
     __tablename__ = "buildings"
@@ -19,3 +20,12 @@ class EnergyReading(Base):
     kwh = Column(Float, nullable=False)
     source = Column(String, default="manual")
     created_at = Column(DateTime, default=func.now())
+
+    class Conversation(Base):
+     __tablename__ = "conversations"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(String, nullable=False)
+    service = Column(String, nullable=False, default="energy")
+    messages = Column(JSON, nullable=False, default=[])
+    created_at = Column(DateTime, default=func.now())
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())

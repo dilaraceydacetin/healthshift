@@ -16,6 +16,10 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Request
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 
+from energy.models import Conversation
+from pydantic import BaseModel as PydanticBase
+from typing import List
+
 router = APIRouter()
 limiter = Limiter(key_func=get_remote_address)
 
@@ -45,6 +49,14 @@ class ReadingResponse(BaseModel):
     source: str
 
     model_config = {"from_attributes": True}
+
+class MessageItem(PydanticBase):
+    role: str
+    text: str
+
+class ConversationSave(PydanticBase):
+    user_id: str
+    messages: List[MessageItem]
 
 # --- Endpoint'ler ---
 @router.get("/health")
@@ -144,3 +156,38 @@ def get_stats(db: Session = Depends(get_db)):
             for row in results
         ]
     }
+
+@router.post("/conversations")
+def save_conversation(data: ConversationSave, db: Session = Depends(get_db)):
+    existing = db.query(Conversation).filter(
+        Conversation.user_id == data.user_id,
+        Conversation.service == "energy"
+    ).first()
+    
+    messages = [{"role": m.role, "text": m.text} for m in data.messages]
+    
+    if existing:
+        existing.messages = messages
+        existing.updated_at = func.now()
+    else:
+        conv = Conversation(
+            user_id=data.user_id,
+            service="energy",
+            messages=messages
+        )
+        db.add(conv)
+    
+    db.commit()
+    return {"status": "saved"}
+
+@router.get("/conversations/{user_id}")
+def get_conversation(user_id: str, db: Session = Depends(get_db)):
+    conv = db.query(Conversation).filter(
+        Conversation.user_id == user_id,
+        Conversation.service == "energy"
+    ).first()
+    
+    if not conv:
+        return {"messages": []}
+    
+    return {"messages": conv.messages}

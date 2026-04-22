@@ -31,6 +31,20 @@ export default function EnergyPage() {
       .catch(() => {});
   }, []);
 
+  // Giriş yapan kullanıcı için konuşma geçmişini yükle
+useEffect(() => {
+  if (user) {
+    fetch(API_URL + "/conversations/" + user.id)
+      .then(res => res.json())
+      .then(data => {
+        if (data.messages && data.messages.length > 0) {
+          setMessages(data.messages);
+        }
+      })
+      .catch(() => {});
+  }
+}, [user]);
+
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
   const file = e.target.files?.[0];
   if (!file) return;
@@ -77,7 +91,8 @@ export default function EnergyPage() {
   const handleAsk = async () => {
   if (!question.trim()) return;
   const userMsg = question;
-  setMessages(prev => [...prev, { role: "user", text: userMsg }]);
+  const newMessages = [...messages, { role: "user" as const, text: userMsg }];
+  setMessages(newMessages);
   setQuestion("");
   setAsking(true);
   setAskError(false);
@@ -89,9 +104,18 @@ export default function EnergyPage() {
     });
     if (!res.ok) throw new Error();
     const data = await res.json();
-    setMessages(prev => [...prev, { role: "ai", text: data.answer }]);
+    const updatedMessages = [...newMessages, { role: "ai" as const, text: data.answer }];
+    setMessages(updatedMessages);
+
+    if (user) {
+      fetch(API_URL + "/conversations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: user.id, messages: updatedMessages }),
+      }).catch(() => {});
+    }
   } catch {
-    setMessages(prev => [...prev, { role: "ai", text: "Failed to get a response. Please try again." }]);
+    setMessages(prev => [...prev, { role: "ai" as const, text: "Failed to get a response. Please try again." }]);
     setAskError(true);
   } finally {
     setAsking(false);
