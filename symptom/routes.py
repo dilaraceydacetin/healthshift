@@ -238,3 +238,9 @@ def get_conversations(user_id: str, db: Session = Depends(get_db)):
         }
         for c in convs
     ]}
+
+@router.delete("/entries/{entry_id}")
+def delete_entry(entry_id: int, db: Session = Depends(get_db)):
+    db.query(SymptomEntry).filter(SymptomEntry.id == entry_id).delete()
+    db.commit()
+    return {"status": "deleted"}
