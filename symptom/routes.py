@@ -9,8 +9,12 @@ from fastapi.responses import StreamingResponse
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 import io
+from fastapi import APIRouter, Depends, Request
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 router = APIRouter()
+limiter = Limiter(key_func=get_remote_address)
 
 class SymptomCreate(BaseModel):
     date: datetime
@@ -74,11 +78,12 @@ def create_medication(med: MedicationCreate, db: Session = Depends(get_db)):
     return db_med
 
 @router.post("/ask")
-def ask_question(request: AskRequest, db: Session = Depends(get_db)):
+@limiter.limit("10/minute")
+def ask_question(request: Request, body: AskRequest, db: Session = Depends(get_db)):
     entries = db.query(SymptomEntry).order_by(
         SymptomEntry.date.desc()
     ).limit(20).all()
-    
+
     if entries:
         context = "Recent symptom entries:\n" + "\n".join([
             f"- {e.date.strftime('%Y-%m-%d')}: {e.symptom} (severity: {e.severity}/10) - {e.notes}"
@@ -86,10 +91,10 @@ def ask_question(request: AskRequest, db: Session = Depends(get_db)):
         ])
     else:
         context = ""
-    
+
     from core.llm import ask
-    answer = ask(prompt=request.question, context=context)
-    return {"question": request.question, "answer": answer}
+    answer = ask(prompt=body.question, context=context)
+    return {"question": body.question, "answer": answer}
 
 
 
