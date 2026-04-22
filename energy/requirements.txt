@@ -58,3 +58,5 @@ websockets==16.0
 xxhash==3.6.0
 zstandard==0.25.0
 slowapi
+PyPDF2
+python-docx

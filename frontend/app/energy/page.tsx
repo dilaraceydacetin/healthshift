@@ -200,9 +200,9 @@ export default function EnergyPage() {
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-700">{uploading ? "Uploading..." : "Choose CSV file"}</p>
-                  <p className="text-xs text-gray-400">building, date, kwh, notes</p>
+                  <p className="text-xs text-gray-400">CSV, PDF or Word document</p>
                 </div>
-                <input type="file" accept=".csv" onChange={handleUpload} disabled={uploading} className="hidden" />
+                <input type="file" accept=".csv,.pdf,.docx" onChange={handleUpload} disabled={uploading} className="hidden" />
               </label>
               {uploadMsg && (
                 <p className={`mt-3 text-sm ${uploadError ? "text-red-500" : "text-emerald-600"}`}>
