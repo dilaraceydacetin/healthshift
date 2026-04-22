@@ -2,40 +2,34 @@
 import { useState, useEffect } from "react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase";
+import ReactMarkdown from "react-markdown";
 
 const API_URL = process.env.NEXT_PUBLIC_ENERGY_API_URL || "http://localhost:8001/api";
 
-const sampleChartData = [
-  { month: "Jan", kwh: 1260 },
-  { month: "Feb", kwh: 980 },
-  { month: "Mar", kwh: 1450 },
-  { month: "Apr", kwh: 820 },
-  { month: "May", kwh: 650 },
-  { month: "Jun", kwh: 540 },
-  { month: "Jul", kwh: 490 },
-  { month: "Aug", kwh: 510 },
-  { month: "Sep", kwh: 720 },
-  { month: "Oct", kwh: 980 },
-  { month: "Nov", kwh: 1180 },
-  { month: "Dec", kwh: 1390 },
-];
-
 export default function EnergyPage() {
+  const [user, setUser] = useState<any>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadMsg, setUploadMsg] = useState("");
   const [uploadError, setUploadError] = useState(false);
   const [question, setQuestion] = useState("");
-  const [answer, setAnswer] = useState("");
+  const [messages, setMessages] = useState<{role: "user" | "ai", text: string}[]>([]);
   const [asking, setAsking] = useState(false);
   const [askError, setAskError] = useState(false);
   const [chartData, setChartData] = useState<{month: string, kwh: number}[]>([]);
 
-useEffect(() => {
-  fetch(API_URL + "/stats")
-    .then(res => res.json())
-    .then(data => setChartData(data.data || []))
-    .catch(() => {});
-}, []);
+  const supabase = createClient();
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setUser(data.user));
+  }, []);
+
+  useEffect(() => {
+    fetch(API_URL + "/stats")
+      .then(res => res.json())
+      .then(data => setChartData(data.data || []))
+      .catch(() => {});
+  }, []);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -46,7 +40,7 @@ useEffect(() => {
     const formData = new FormData();
     formData.append("file", file);
     try {
-      const res = await fetch(`${API_URL}/upload`, { method: "POST", body: formData });
+      const res = await fetch(API_URL + "/upload", { method: "POST", body: formData });
       if (!res.ok) throw new Error();
       const data = await res.json();
       setUploadMsg(`${file.name} uploaded successfully (${data.chunks} chunks)`);
@@ -60,26 +54,28 @@ useEffect(() => {
   };
 
   const handleAsk = async () => {
-    if (!question.trim()) return;
-    setAsking(true);
-    setAnswer("");
-    setAskError(false);
-    try {
-      const res = await fetch(`${API_URL}/ask`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question }),
-      });
-      if (!res.ok) throw new Error();
-      const data = await res.json();
-      setAnswer(data.answer);
-    } catch {
-      setAnswer("Failed to get a response. Please try again.");
-      setAskError(true);
-    } finally {
-      setAsking(false);
-    }
-  };
+  if (!question.trim()) return;
+  const userMsg = question;
+  setMessages(prev => [...prev, { role: "user", text: userMsg }]);
+  setQuestion("");
+  setAsking(true);
+  setAskError(false);
+  try {
+    const res = await fetch(API_URL + "/ask", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question: userMsg }),
+    });
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    setMessages(prev => [...prev, { role: "ai", text: data.answer }]);
+  } catch {
+    setMessages(prev => [...prev, { role: "ai", text: "Failed to get a response. Please try again." }]);
+    setAskError(true);
+  } finally {
+    setAsking(false);
+  }
+};
 
   return (
     <main className="min-h-screen bg-gray-50">
@@ -88,11 +84,18 @@ useEffect(() => {
           <Link href="/" className="text-gray-400 text-sm hover:text-gray-600 transition-colors mb-6 inline-block">
             ← Back
           </Link>
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center">
-              <div className="w-3 h-3 bg-white rounded-sm"></div>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center">
+                <div className="w-3 h-3 bg-white rounded-sm"></div>
+              </div>
+              <h1 className="text-2xl font-semibold text-gray-900">EnergyShift</h1>
             </div>
-            <h1 className="text-2xl font-semibold text-gray-900">EnergyShift</h1>
+            {!user && (
+              <Link href="/login" className="text-xs text-gray-500 hover:text-gray-900 border border-gray-200 px-3 py-1.5 rounded-lg transition-colors">
+                Sign in to save data
+              </Link>
+            )}
           </div>
           <p className="text-gray-500 text-sm">Upload energy data and ask AI questions about it.</p>
         </div>
@@ -120,44 +123,61 @@ useEffect(() => {
 
         <div className="bg-white border border-gray-200 rounded-2xl p-6">
           <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4">Ask AI</h2>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={question}
-              onChange={(e) => setQuestion(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleAsk()}
-              placeholder="Which building consumes the most energy?"
-              className="flex-1 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:border-transparent"
-            />
-            <button
-              onClick={handleAsk}
-              disabled={asking || !question.trim()}
-              className="bg-emerald-500 text-white px-5 py-3 rounded-xl text-sm font-medium hover:bg-emerald-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-            >
-              {asking ? "..." : "Ask"}
-            </button>
-          </div>
-          {answer && (
-            <div className={`mt-4 p-4 rounded-xl text-sm leading-relaxed ${askError ? "bg-red-50 text-red-700" : "bg-gray-50 text-gray-700"}`}>
-              {answer}
+          
+          {messages.length > 0 && (
+            <div className="flex flex-col gap-3 mb-4 max-h-80 overflow-y-auto pr-1">
+              {messages.map((msg, i) => (
+                <div
+                  key={i}
+                  className={`p-4 rounded-xl text-sm leading-relaxed whitespace-pre-wrap ${
+                    msg.role === "user"
+                      ? "bg-emerald-50 text-emerald-800 ml-8"
+                      : "bg-gray-50 text-gray-700 mr-8"
+                  }`}
+                >
+                  <div className="prose prose-sm max-w-none prose-p:my-1 prose-li:my-0">
+                    <ReactMarkdown>
+                      {msg.text}
+                    </ReactMarkdown>
+                  </div>
+                </div>
+              ))}
+              {asking && (
+                <div className="bg-gray-50 text-gray-400 p-4 rounded-xl text-sm mr-8">
+                  Thinking...
+                </div>
+              )}
             </div>
           )}
-        </div>
 
-        <div className="bg-white border border-gray-200 rounded-2xl p-6 mb-4">
-          <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-1">
-            Energy Consumption
-          </h2>
+  <div className="flex gap-2">
+    <input
+      type="text"
+      value={question}
+      onChange={(e) => setQuestion(e.target.value)}
+      onKeyDown={(e) => e.key === "Enter" && handleAsk()}
+      placeholder="Which building consumes the most energy?"
+      className="flex-1 border border-gray-200 rounded-xl px-4 py-3 text-sm text-black focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:border-transparent"
+    />
+    <button
+      onClick={handleAsk}
+      disabled={asking || !question.trim()}
+      className="bg-emerald-500 text-white px-5 py-3 rounded-xl text-sm font-medium hover:bg-emerald-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+    >
+      {asking ? "..." : "Ask"}
+    </button>
+  </div>
+</div>
+
+         <div className="bg-white border border-gray-200 rounded-2xl p-6 mb-4">
+          <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-1">Energy Consumption</h2>
           <p className="text-xs text-gray-400 mb-4">Monthly kWh — all buildings</p>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={chartData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
               <XAxis dataKey="month" tick={{ fontSize: 11, fill: "#9ca3af" }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fontSize: 11, fill: "#9ca3af" }} axisLine={false} tickLine={false} />
-              <Tooltip
-                contentStyle={{ border: "1px solid #e5e7eb", borderRadius: "12px", fontSize: "12px" }}
-                cursor={{ fill: "#f9fafb" }}
-              />
+              <Tooltip contentStyle={{ border: "1px solid #e5e7eb", borderRadius: "12px", fontSize: "12px" }} cursor={{ fill: "#f9fafb" }} />
               <Bar dataKey="kwh" fill="#10b981" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>

@@ -66,7 +66,7 @@ export default function Home() {
         </div>
 
         <div className="flex flex-col gap-4 sm:flex-row mb-8">
-          <Link href={user ? "/energy" : "/login"} className="group block flex-1 min-w-0">
+          <Link href="/energy" className="group block flex-1 min-w-0">
             <div className="bg-white border border-gray-200 rounded-2xl p-8 hover:border-emerald-300 hover:shadow-lg transition-all duration-300">
               <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center mb-6 group-hover:bg-emerald-100 transition-colors">
                 <div className="w-4 h-4 bg-emerald-500 rounded-sm"></div>
@@ -76,7 +76,7 @@ export default function Home() {
                 Analyze building energy consumption. Detect anomalies and get AI-powered recommendations.
               </p>
               <div className="mt-6 flex items-center text-emerald-600 text-sm font-medium">
-                {user ? "Open dashboard" : "Sign in to access"}
+                {user ? "Open dashboard" : "Try it free"}
                 <svg className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
@@ -84,7 +84,7 @@ export default function Home() {
             </div>
           </Link>
 
-          <Link href={user ? "/symptom" : "/login"} className="group block flex-1 min-w-0">
+          <Link href="/symptom" className="group block flex-1 min-w-0">
             <div className="bg-white border border-gray-200 rounded-2xl p-8 hover:border-blue-300 hover:shadow-lg transition-all duration-300">
               <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center mb-6 group-hover:bg-blue-100 transition-colors">
                 <div className="w-4 h-4 bg-blue-500 rounded-full"></div>
@@ -94,7 +94,7 @@ export default function Home() {
                 Track symptoms and medications. Get pattern analysis and generate doctor-ready reports.
               </p>
               <div className="mt-6 flex items-center text-blue-600 text-sm font-medium">
-                {user ? "Open dashboard" : "Sign in to access"}
+                {user ? "Open dashboard" : "Try it free"}
                 <svg className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
