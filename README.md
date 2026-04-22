@@ -9,14 +9,19 @@ AI-powered analytics platform for building energy management and personal health
 ## Projects
 
 ### EnergyShift
-Upload CSV energy data and ask AI questions about building consumption patterns. Detects anomalies and generates weekly reports with recommendations.
+Upload CSV energy data and ask AI questions about building consumption patterns. Detects anomalies, generates weekly reports with recommendations, and visualizes monthly consumption with real-time charts.
 
-**Try it:** Upload a CSV with `building, date, kwh, notes` columns → Ask "Which building consumes the most energy?"
+**Try it:**
+1. Sign up at [healthshift-phi.vercel.app](https://healthshift-phi.vercel.app)
+2. Go to EnergyShift → Upload a CSV with `building, date, kwh, notes` columns
+3. Ask "Which building consumes the most energy?"
 
 ### SymptomLog
 Track daily symptoms and medications. Get AI pattern analysis and generate doctor-ready PDF reports.
 
-**Try it:** Ask "What patterns do you see in my symptoms?" → Download PDF report
+**Try it:**
+1. Go to SymptomLog → Ask "What patterns do you see in my symptoms?"
+2. Download PDF report
 
 ---
 
@@ -26,7 +31,8 @@ Track daily symptoms and medications. Get AI pattern analysis and generate docto
 |-------|-----------|
 | Backend | FastAPI, SQLAlchemy, PostgreSQL |
 | AI | Groq (Llama 3.3 70B), LangGraph agents, RAG pipeline |
-| Frontend | Next.js 15, TypeScript, Tailwind CSS |
+| Frontend | Next.js 15, TypeScript, Tailwind CSS, Recharts |
+| Auth | Supabase Auth |
 | DevOps | Docker, GitHub Actions CI/CD |
 | IaC | Terraform (Azure provider) |
 | Deploy | Vercel (frontend), Render (API), Supabase (database) |
@@ -34,13 +40,15 @@ Track daily symptoms and medications. Get AI pattern analysis and generate docto
 ---
 
 ## Architecture
-Vercel (Next.js)
+
+Vercel (Next.js + Supabase Auth)
 ↓
 Render (FastAPI × 2)     ← Docker containers
 ↓
 Supabase (PostgreSQL)    ← pg_trgm for RAG search
 ↓
 Groq API (Llama 3.3)    ← LLM + LangGraph agents
+
 
 ---
 
@@ -49,14 +57,12 @@ Groq API (Llama 3.3)    ← LLM + LangGraph agents
 ```bash
 git clone https://github.com/dilaraceydacetin/healthshift
 cd healthshift
-
 cp .env.example .env
-# Add your GROQ_API_KEY to .env
-
+# Add GROQ_API_KEY and Supabase credentials to .env
 docker compose up --build
 ```
 
-Services start at:
+Services:
 - Frontend: http://localhost:3000
 - EnergyShift API: http://localhost:8001/docs
 - SymptomLog API: http://localhost:8002/docs
@@ -65,20 +71,22 @@ Services start at:
 
 ## Key Features
 
-- **RAG pipeline** — PostgreSQL `pg_trgm` for semantic search without external vector DB
-- **LangGraph agent** — Multi-step energy analysis: fetch → detect anomalies → analyze → recommend
-- **PDF generation** — Doctor-ready symptom reports via ReportLab
-- **CI/CD** — GitHub Actions runs tests on every push
+- **Auth** — Supabase Auth with email/password
+- **RAG pipeline** — PostgreSQL `pg_trgm` for semantic search
+- **LangGraph agent** — 4-step: fetch → detect anomalies → analyze → recommend
+- **Real-time charts** — Recharts with live data from API
+- **PDF generation** — Doctor-ready reports via ReportLab
+- **CI/CD** — GitHub Actions automated tests on every push
 - **IaC** — Terraform configuration for Azure deployment
 
 ---
 
 ## API Endpoints
 
-- POST /api/upload    -      Upload CSV energy data
-- POST /api/ask       -      Ask AI about your data
-- POST /api/weekly-report/{id} - LangGraph energy analysis
-- POST /api/entries      -   Log a symptom
-- GET  /api/report/pdf  -    Download symptom PDF report
-
+- POST /api/upload       -           Upload CSV energy data
+- POST /api/ask           -          Ask AI about your data
+- GET  /api/stats          -         Monthly energy consumption stats
+- POST /api/weekly-report/{id}   -   LangGraph energy analysis
+- POST /api/entries       -          Log a symptom
+- GET  /api/report/pdf     -         Download symptom PDF report
 
