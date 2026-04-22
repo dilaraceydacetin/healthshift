@@ -78,6 +78,10 @@ def create_medication(med: MedicationCreate, db: Session = Depends(get_db)):
     db.refresh(db_med)
     return db_med
 
+class AskRequest(BaseModel):
+    question: str
+    messages: list[dict] = []  # konuşma geçmişi
+
 @router.post("/ask")
 @limiter.limit("10/minute")
 def ask_question(request: Request, body: AskRequest, db: Session = Depends(get_db)):
@@ -85,13 +89,22 @@ def ask_question(request: Request, body: AskRequest, db: Session = Depends(get_d
         SymptomEntry.date.desc()
     ).limit(20).all()
 
+    context_parts = []
+
     if entries:
-        context = "Recent symptom entries:\n" + "\n".join([
+        context_parts.append("Recorded symptom entries:\n" + "\n".join([
             f"- {e.date.strftime('%Y-%m-%d')}: {e.symptom} (severity: {e.severity}/10) - {e.notes}"
             for e in entries
+        ]))
+
+    if body.messages:
+        history = "\n".join([
+            f"{'User' if m['role'] == 'user' else 'AI'}: {m['text']}"
+            for m in body.messages[-6:]  # son 6 mesaj
         ])
-    else:
-        context = ""
+        context_parts.append(f"Conversation history:\n{history}")
+
+    context = "\n\n".join(context_parts)
 
     from core.llm import ask
     answer = ask(prompt=body.question, context=context)

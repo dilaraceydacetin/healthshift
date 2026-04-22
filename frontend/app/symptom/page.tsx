@@ -52,7 +52,10 @@ export default function SymptomPage() {
       const res = await fetch(API_URL + "/ask", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question: userMsg }),
+        body: JSON.stringify({
+          question: userMsg,
+          messages: newMessages.slice(0, -1)
+        }),
       });
       if (!res.ok) throw new Error();
       const data = await res.json();
@@ -84,7 +87,6 @@ export default function SymptomPage() {
   return (
     <main className="min-h-screen bg-gray-50">
       <div className="max-w-5xl mx-auto px-4 py-8">
-        {/* Header */}
         <div className="mb-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link href="/" className="text-gray-400 text-sm hover:text-gray-600 transition-colors">← Back</Link>
@@ -110,7 +112,6 @@ export default function SymptomPage() {
         </div>
 
         <div className="flex gap-4">
-          {/* Sidebar */}
           {user && sidebarOpen && (
             <div className="w-56 flex-shrink-0">
               <div className="bg-white border border-gray-200 rounded-2xl p-4 sticky top-4">
@@ -139,9 +140,7 @@ export default function SymptomPage() {
             </div>
           )}
 
-          {/* Main content */}
           <div className="flex-1 flex flex-col gap-4">
-            {/* Chat */}
             <div className="bg-white border border-gray-200 rounded-2xl p-6">
               <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4">Ask AI</h2>
               {messages.length > 0 && (
@@ -176,7 +175,6 @@ export default function SymptomPage() {
               </div>
             </div>
 
-            {/* PDF Report */}
             <div className="bg-white border border-gray-200 rounded-2xl p-6">
               <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4">Download Report</h2>
               <p className="text-gray-500 text-sm mb-4">Generate a PDF summary of your symptoms for your doctor visit.</p>
@@ -186,7 +184,6 @@ export default function SymptomPage() {
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 bg-blue-500 text-white px-5 py-3 rounded-xl text-sm font-medium hover:bg-blue-600 transition-colors"
               >
-              
                 Download PDF Report
               </a>
             </div>
