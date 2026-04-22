@@ -1,8 +1,24 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import Link from "next/link";
 
 const API_URL = process.env.NEXT_PUBLIC_ENERGY_API_URL || "http://localhost:8001/api";
+
+const sampleChartData = [
+  { month: "Jan", kwh: 1260 },
+  { month: "Feb", kwh: 980 },
+  { month: "Mar", kwh: 1450 },
+  { month: "Apr", kwh: 820 },
+  { month: "May", kwh: 650 },
+  { month: "Jun", kwh: 540 },
+  { month: "Jul", kwh: 490 },
+  { month: "Aug", kwh: 510 },
+  { month: "Sep", kwh: 720 },
+  { month: "Oct", kwh: 980 },
+  { month: "Nov", kwh: 1180 },
+  { month: "Dec", kwh: 1390 },
+];
 
 export default function EnergyPage() {
   const [uploading, setUploading] = useState(false);
@@ -12,6 +28,14 @@ export default function EnergyPage() {
   const [answer, setAnswer] = useState("");
   const [asking, setAsking] = useState(false);
   const [askError, setAskError] = useState(false);
+  const [chartData, setChartData] = useState<{month: string, kwh: number}[]>([]);
+
+useEffect(() => {
+  fetch(API_URL + "/stats")
+    .then(res => res.json())
+    .then(data => setChartData(data.data || []))
+    .catch(() => {});
+}, []);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -119,6 +143,26 @@ export default function EnergyPage() {
             </div>
           )}
         </div>
+
+        <div className="bg-white border border-gray-200 rounded-2xl p-6 mb-4">
+          <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-1">
+            Energy Consumption
+          </h2>
+          <p className="text-xs text-gray-400 mb-4">Monthly kWh — all buildings</p>
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart data={chartData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <XAxis dataKey="month" tick={{ fontSize: 11, fill: "#9ca3af" }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 11, fill: "#9ca3af" }} axisLine={false} tickLine={false} />
+              <Tooltip
+                contentStyle={{ border: "1px solid #e5e7eb", borderRadius: "12px", fontSize: "12px" }}
+                cursor={{ fill: "#f9fafb" }}
+              />
+              <Bar dataKey="kwh" fill="#10b981" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+
       </div>
     </main>
   );

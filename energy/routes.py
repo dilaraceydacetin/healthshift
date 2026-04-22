@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy import text
 from pydantic import BaseModel
 from datetime import datetime
 from core.database import get_db
@@ -116,4 +117,27 @@ def weekly_report(building_id: int):
         "anomalies_detected": len(result["anomalies"]),
         "analysis": result["analysis"],
         "recommendations": result["recommendations"]
+    }
+
+@router.get("/stats")
+def get_stats(db: Session = Depends(get_db)):
+    from sqlalchemy import func, extract
+    results = db.execute(text("""
+        SELECT 
+            TO_CHAR(timestamp, 'Mon') as month,
+            EXTRACT(MONTH FROM timestamp) as month_num,
+            SUM(kwh) as total_kwh
+        FROM energy_readings
+        GROUP BY month, month_num
+        ORDER BY month_num
+    """)).fetchall()
+    
+    if not results:
+        return {"data": []}
+    
+    return {
+        "data": [
+            {"month": row[0], "kwh": round(row[2], 1)}
+            for row in results
+        ]
     }
