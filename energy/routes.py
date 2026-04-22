@@ -159,35 +159,34 @@ def get_stats(db: Session = Depends(get_db)):
 
 @router.post("/conversations")
 def save_conversation(data: ConversationSave, db: Session = Depends(get_db)):
-    existing = db.query(Conversation).filter(
-        Conversation.user_id == data.user_id,
-        Conversation.service == "energy"
-    ).first()
-    
-    messages = [{"role": m.role, "text": m.text} for m in data.messages]
-    
-    if existing:
-        existing.messages = messages
-        existing.updated_at = func.now()
-    else:
-        conv = Conversation(
-            user_id=data.user_id,
-            service="energy",
-            messages=messages
-        )
-        db.add(conv)
-    
+    conv = Conversation(
+        user_id=data.user_id,
+        service="energy",
+        messages=[{"role": m.role, "text": m.text} for m in data.messages]
+    )
+    db.add(conv)
     db.commit()
-    return {"status": "saved"}
+    db.refresh(conv)
+    return {"id": conv.id, "status": "saved"}
 
 @router.get("/conversations/{user_id}")
-def get_conversation(user_id: str, db: Session = Depends(get_db)):
-    conv = db.query(Conversation).filter(
+def get_conversations(user_id: str, db: Session = Depends(get_db)):
+    convs = db.query(Conversation).filter(
         Conversation.user_id == user_id,
         Conversation.service == "energy"
-    ).first()
+    ).order_by(Conversation.created_at.desc()).limit(20).all()
     
-    if not conv:
-        return {"messages": []}
-    
-    return {"messages": conv.messages}
+    return {"conversations": [
+        {
+            "id": c.id,
+            "messages": c.messages,
+            "created_at": c.created_at.strftime("%b %d, %H:%M") if c.created_at else ""
+        }
+        for c in convs
+    ]}
+
+@router.delete("/conversations/{conv_id}")
+def delete_conversation(conv_id: int, db: Session = Depends(get_db)):
+    db.query(Conversation).filter(Conversation.id == conv_id).delete()
+    db.commit()
+    return {"status": "deleted"}
