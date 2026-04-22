@@ -6,7 +6,7 @@ from symptom.routes import router
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     from core.database import Base, engine
-    from symptom.models import SymptomEntry, Medication
+    from symptom.models import SymptomEntry, Medication, Conversation
     Base.metadata.create_all(bind=engine)
     yield
 

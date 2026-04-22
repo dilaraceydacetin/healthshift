@@ -12,6 +12,7 @@ import io
 from fastapi import APIRouter, Depends, Request
 from slowapi import Limiter
 from slowapi.util import get_remote_address
+from symptom.models import Conversation
 
 router = APIRouter()
 limiter = Limiter(key_func=get_remote_address)
@@ -169,3 +170,36 @@ def generate_pdf_report(user_id: str = "default", db: Session = Depends(get_db))
         media_type="application/pdf",
         headers={"Content-Disposition": "attachment; filename=symptom_report.pdf"}
     )
+
+class MessageItem(BaseModel):
+    role: str
+    text: str
+
+class ConversationSave(BaseModel):
+    user_id: str
+    messages: list[MessageItem]
+
+@router.post("/conversations")
+def save_conversation(data: ConversationSave, db: Session = Depends(get_db)):
+    conv = Conversation(
+        user_id=data.user_id,
+        messages=[{"role": m.role, "text": m.text} for m in data.messages]
+    )
+    db.add(conv)
+    db.commit()
+    db.refresh(conv)
+    return {"id": conv.id, "status": "saved"}
+
+@router.get("/conversations/{user_id}")
+def get_conversations(user_id: str, db: Session = Depends(get_db)):
+    convs = db.query(Conversation).filter(
+        Conversation.user_id == user_id
+    ).order_by(Conversation.created_at.desc()).limit(20).all()
+    return {"conversations": [
+        {
+            "id": c.id,
+            "messages": c.messages,
+            "created_at": c.created_at.strftime("%b %d, %H:%M") if c.created_at else ""
+        }
+        for c in convs
+    ]}
