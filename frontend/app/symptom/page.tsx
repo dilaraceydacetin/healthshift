@@ -180,13 +180,13 @@ export default function SymptomPage() {
             <div className="bg-white border border-gray-200 rounded-2xl p-6">
               <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4">Download Report</h2>
               <p className="text-gray-500 text-sm mb-4">Generate a PDF summary of your symptoms for your doctor visit.</p>
-              
+              <a
                 href={API_URL + "/report/pdf"}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 bg-blue-500 text-white px-5 py-3 rounded-xl text-sm font-medium hover:bg-blue-600 transition-colors"
+              >
               
-              <a>
                 Download PDF Report
               </a>
             </div>
