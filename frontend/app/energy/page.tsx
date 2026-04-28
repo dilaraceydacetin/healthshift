@@ -13,7 +13,7 @@ interface ConvItem { id: number; messages: Message[]; created_at: string; }
 export default function EnergyPage() {
   const [user, setUser] = useState<any>(null);
   const [uploading, setUploading] = useState(false);
-  const [uploadMsg, setUploadMsg] = useState("");
+  const [uploads, setUploads] = useState<{name: string, status: "ok" | "error", msg: string}[]>([]);
   const [uploadError, setUploadError] = useState(false);
   const [question, setQuestion] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
@@ -53,11 +53,14 @@ export default function EnergyPage() {
   };
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploading(true);
-    setUploadMsg("");
-    setUploadError(false);
+  const file = e.target.files?.[0];
+  if (!file) return;
+  if (uploads.length >= 3) return;
+  
+  setUploading(true);
+
+  // Lokal parse — grafik için
+  if (file.name.endsWith(".csv")) {
     const text = await file.text();
     const lines = text.trim().split("\n").slice(1);
     const monthMap: Record<string, number> = {};
@@ -72,21 +75,21 @@ export default function EnergyPage() {
     });
     const localChart = Object.entries(monthMap).map(([month, kwh]) => ({ month, kwh: Math.round(kwh * 10) / 10 }));
     if (localChart.length > 0) setChartData(localChart);
-    const formData = new FormData();
-    formData.append("file", file);
-    try {
-      const res = await fetch(API_URL + "/upload", { method: "POST", body: formData });
-      if (!res.ok) throw new Error();
-      const data = await res.json();
-      setUploadMsg(`${file.name} uploaded successfully (${data.chunks} chunks)`);
-      setUploadError(false);
-    } catch {
-      setUploadMsg("Upload failed. Please try again.");
-      setUploadError(true);
-    } finally {
-      setUploading(false);
-    }
-  };
+  }
+
+  const formData = new FormData();
+  formData.append("file", file);
+  try {
+    const res = await fetch(API_URL + "/upload", { method: "POST", body: formData });
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    setUploads(prev => [...prev, { name: file.name, status: "ok", msg: `${data.chunks} chunks` }]);
+  } catch {
+    setUploads(prev => [...prev, { name: file.name, status: "error", msg: "Upload failed" }]);
+  } finally {
+    setUploading(false);
+  }
+};
 
   const handleAsk = async () => {
     if (!question.trim()) return;
@@ -190,24 +193,50 @@ export default function EnergyPage() {
           {/* Main content */}
           <div className="flex-1 flex flex-col gap-4">
             {/* Upload */}
-            <div className="bg-white border border-gray-200 rounded-2xl p-6">
-              <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4">Upload Data</h2>
-              <label className={`flex items-center gap-3 p-4 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${uploading ? "border-gray-200 bg-gray-50" : "border-gray-200 hover:border-emerald-300 hover:bg-emerald-50"}`}>
-                <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <svg className="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                  </svg>
+            <div className="bg-white border border-gray-200 rounded-2xl p-6 mb-4">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Upload Data</h2>
+                {uploads.length > 0 && uploads.length < 3 && (
+                  <span className="text-xs text-gray-400">{uploads.length}/3 files</span>
+                )}
+                {uploads.length >= 3 && (
+                  <span className="text-xs text-red-400">Max 3 files reached</span>
+                )}
+              </div>
+
+              {/* Yüklenen dosyalar */}
+              {uploads.length > 0 && (
+                <div className="flex flex-col gap-2 mb-3">
+                  {uploads.map((u, i) => (
+                    <div key={i} className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-xs font-medium ${u.status === "ok" ? "text-emerald-600" : "text-red-500"}`}>
+                          {u.status === "ok" ? "✓" : "✗"}
+                        </span>
+                        <span className="text-xs text-gray-600 truncate max-w-40">{u.name}</span>
+                      </div>
+                      <span className="text-xs text-gray-400">{u.msg}</span>
+                    </div>
+                  ))}
                 </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">{uploading ? "Uploading..." : "Choose CSV file"}</p>
-                  <p className="text-xs text-gray-400">CSV, PDF or Word document</p>
-                </div>
-                <input type="file" accept=".csv,.pdf,.docx" onChange={handleUpload} disabled={uploading} className="hidden" />
-              </label>
-              {uploadMsg && (
-                <p className={`mt-3 text-sm ${uploadError ? "text-red-500" : "text-emerald-600"}`}>
-                  {uploadError ? "✗" : "✓"} {uploadMsg}
-                </p>
+              )}
+
+              {/* Upload butonu */}
+              {uploads.length < 3 && (
+                <label className={`flex items-center gap-3 p-4 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${uploading ? "border-gray-200 bg-gray-50" : "border-gray-200 hover:border-emerald-300 hover:bg-emerald-50"}`}>
+                  <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <svg className="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-700">
+                      {uploading ? "Uploading..." : uploads.length === 0 ? "Choose file" : "+ Add another file"}
+                    </p>
+                    <p className="text-xs text-gray-400">CSV, PDF or Word document</p>
+                  </div>
+                  <input type="file" accept=".csv,.pdf,.docx" onChange={handleUpload} disabled={uploading} className="hidden" />
+                </label>
               )}
             </div>
 
