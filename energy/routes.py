@@ -190,3 +190,13 @@ def delete_conversation(conv_id: int, db: Session = Depends(get_db)):
     db.query(Conversation).filter(Conversation.id == conv_id).delete()
     db.commit()
     return {"status": "deleted"}
+
+@router.delete("/documents")
+def clear_documents():
+    from core.rag import setup_table
+    from core.database import engine
+    from sqlalchemy import text
+    with engine.connect() as conn:
+        conn.execute(text("DROP TABLE IF EXISTS energy_docs"))
+        conn.commit()
+    return {"status": "cleared"}

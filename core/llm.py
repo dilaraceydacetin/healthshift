@@ -52,4 +52,4 @@ severity is 1-10, estimate if not explicitly stated."""
         text = text.replace("```json", "").replace("```", "").strip()
         return json.loads(text)
     except:
-        return []
+        return [] 
