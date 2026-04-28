@@ -9,11 +9,11 @@ AI-powered analytics platform for building energy management and personal health
 ## Projects
 
 ### EnergyShift
-Upload CSV energy data and ask AI questions about building consumption patterns. Detects anomalies, generates weekly reports with recommendations, and visualizes monthly consumption with real-time charts.
+Upload CSV, PDF or Word document energy data and ask AI questions about building consumption patterns. Detects anomalies, generates weekly reports with recommendations, and visualizes monthly consumption with real-time charts.
 
 **Try it:**
 1. Sign up at [healthshift-phi.vercel.app](https://healthshift-phi.vercel.app)
-2. Go to EnergyShift → Upload a CSV with `building, date, kwh, notes` columns
+2. Go to EnergyShift → Upload a CSV, PDF or Word document with `building, date, kwh, notes` columns
 3. Ask "Which building consumes the most energy?"
 
 ### SymptomLog
