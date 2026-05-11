@@ -71,6 +71,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
+          file: ./Dockerfile 
           push: true
           # 'latest' her zaman güncel kalır, 'sha' ise geriye dönük takip sağlar
           tags: |
