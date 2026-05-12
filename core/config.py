@@ -3,7 +3,7 @@ from functools import lru_cache
 import os
 
 class Settings(BaseSettings):
-    database_url = os.getenv("DATABASE_URL", "postgresql://user:password@localhost:5432/healthshift")
+    database_url = os.getenv("DATABASE_URL")
     llm_provider: str = "groq"
     llm_api_key: str = ""
     llm_model: str = "llama-3.3-70b-versatile"
