@@ -1,8 +1,9 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from functools import lru_cache
+import os
 
 class Settings(BaseSettings):
-    database_url: str = "postgresql://user:password@localhost:5432/healthshift"
+    database_url = os.getenv("DATABASE_URL", "postgresql://user:password@localhost:5432/healthshift")
     llm_provider: str = "groq"
     llm_api_key: str = ""
     llm_model: str = "llama-3.3-70b-versatile"
