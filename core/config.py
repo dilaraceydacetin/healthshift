@@ -2,9 +2,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from functools import lru_cache
 
 class Settings(BaseSettings):
-    database_url: str = "postgresql://user:password@localhost:5432/healthshift"
-    llm_provider: str = "groq"
-    llm_api_key: str = ""
+    DATABASE_URL: str = "postgresql://user:password@localhost:5432/healthshift"
+    LLM_PROVIDER: str = "groq"
+    LLM_API_KEY: str = ""
     llm_model: str = "llama-3.3-70b-versatile"
     llm_base_url: str = "https://api.groq.com/openai/v1"
     debug: bool = True
